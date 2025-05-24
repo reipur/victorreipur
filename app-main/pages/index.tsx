@@ -2,8 +2,10 @@
 'use client';
 import { useEffect, useState, useRef, FC } from 'react';
 import Head from 'next/head';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
-const CV_URL = 'https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/Victor_Reipur_CV.pdf';
+const CV_URL =
+  'https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/Victor_Reipur_CV.pdf';
 const imageFilenames = [
   'DJI_27_optimized.webp',
   'DJI_31_optimized.webp',
@@ -14,10 +16,36 @@ const imageFilenames = [
   'DJI_59_optimized.webp',
 ];
 
+// loader CSS injected globally
+const LoaderStyles = () => (
+  <style jsx global>{`
+    .loader {
+      height: 40px;
+      aspect-ratio: 1.5;
+      --c: no-repeat linear-gradient(#fff 0 0);
+      background: var(--c), var(--c), var(--c), var(--c);
+      background-size: 33.4% 50%;
+      animation: l3 2s infinite linear;
+    }
+    @keyframes l3 {
+      0%    {background-position:0 0,50% 0,0 100%,50% 100%}
+      12.5% {background-position:0 0,100% 0,0 100%,50% 100%}
+      25%   {background-position:50% 0,100% 0,0 100%,50% 100%}
+      37.5% {background-position:50% 0,100% 0,0 100%,100% 100%}
+      50%   {background-position:50% 0,100% 0,50% 100%,100% 100%}
+      62.5% {background-position:0 0,100% 0,50% 100%,100% 100%}
+      75%   {background-position:0 0,50% 0,50% 100%,100% 100%}
+      87.5% {background-position:0 0,50% 0,0 100%,100% 100%}
+      100%  {background-position:0 0,50% 0,0 100%,50% 100%}
+    }
+  `}</style>
+);
+
 const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isNarrow, setIsNarrow] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const calcScale = () => {
@@ -42,6 +70,11 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
       className="relative w-full"
       style={{ paddingTop: '56.25%' }}
     >
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+          <div className="loader" />
+        </div>
+      )}
       <a
         href={src}
         target={isNarrow ? '_self' : '_blank'}
@@ -60,6 +93,7 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
             transformOrigin: '0 0',
             border: 'none',
           }}
+          onLoad={() => setLoading(false)}
         />
       </div>
     </div>
@@ -69,9 +103,9 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
 export default function Home() {
   const [bgUrl, setBgUrl] = useState('');
   const [isNarrow, setIsNarrow] = useState(false);
+  const [cvLoading, setCvLoading] = useState(true);
 
   useEffect(() => {
-    // rotate background
     let idx = Number(sessionStorage.getItem('bgImageIndex'));
     if (isNaN(idx) || idx < 0 || idx >= imageFilenames.length) idx = 0;
     else idx = (idx + 1) % imageFilenames.length;
@@ -80,7 +114,6 @@ export default function Home() {
       `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${imageFilenames[idx]}`
     );
 
-    // check width for link behavior
     const checkWidth = () => setIsNarrow(window.innerWidth < 800);
     checkWidth();
     window.addEventListener('resize', checkWidth);
@@ -89,6 +122,7 @@ export default function Home() {
 
   return (
     <>
+      <LoaderStyles />
       <Head>
         <title>victorreipur.dk</title>
       </Head>
@@ -96,21 +130,28 @@ export default function Home() {
         className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
       >
-        {/* CV section with explicit link above */}
-        <div className="w-full max-w-4xl text-left">
+        {/* CV section */}
+        <div className="w-full max-w-4xl text-left relative">
           <a
             href="/cv"
             target={isNarrow ? '_self' : '_blank'}
             rel="noopener noreferrer"
-            className="inline-block mb-2 text-sm font-medium text-blue-200 hover:underline"
+            className="inline-flex items-center mb-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-full text-white font-medium transition z-10"
           >
-            View full CV →
+            View full CV
+            <ArrowTopRightOnSquareIcon className="ml-2 h-5 w-5" />
           </a>
+          {cvLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+              <div className="loader" />
+            </div>
+          )}
           <div className="w-full h-[80vh] bg-white rounded-xl shadow-lg overflow-auto">
             <iframe
               src={CV_URL}
               className="w-full h-full"
               title="Victor Reipur CV"
+              onLoad={() => setCvLoading(false)}
             />
           </div>
         </div>
