@@ -1,5 +1,4 @@
 // pages/api/proxy.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // fetch with a desktop UA to get desktop layout
     const targetRes = await fetch(url, {
       headers: {
         'User-Agent':
@@ -22,23 +20,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const contentType = targetRes.headers.get('content-type') || 'text/html';
     res.setHeader('Content-Type', contentType);
-
-    // strip browser frame-busting headers
     res.removeHeader('X-Frame-Options');
     res.removeHeader('Content-Security-Policy');
 
     const html = await targetRes.text();
     const origin = new URL(url as string).origin;
-
-    // inject <base> so assets resolve
     const proxied = html.replace(
       /<head([^>]*)>/i,
       `<head$1><base href="${origin}">`
     );
 
     res.status(targetRes.status).send(proxied);
-  } catch (err) {
-    console.error(err);
+  } catch {
+    // no console.error here, so nothing shows up in your Next.js console
     res.status(500).send('Proxy error');
   }
 }
