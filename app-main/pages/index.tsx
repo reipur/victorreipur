@@ -1,6 +1,5 @@
-// pages/index.tsx
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { DocumentChartBarIcon } from '@heroicons/react/24/solid';
 
@@ -22,9 +21,20 @@ const messages = [
   },
 ];
 
+const imageFilenames = [
+  'DJI_27_optimized.webp',
+  'DJI_31_optimized.webp',
+  'DJI_39_optimized.webp',
+  'DJI_43_optimized.webp',
+  'DJI_47_optimized.webp',
+  'DJI_51_optimized.webp',
+  'DJI_59_optimized.webp',
+];
+
 export default function Home() {
   const [idx, setIdx] = useState(0);
   const [animating, setAnimating] = useState(false);
+  const [bgUrl, setBgUrl] = useState('');
 
   const handleSwitch = () => {
     setAnimating(true);
@@ -34,6 +44,14 @@ export default function Home() {
     }, 300);
   };
 
+  useEffect(() => {
+    const randomImg =
+      imageFilenames[Math.floor(Math.random() * imageFilenames.length)];
+    setBgUrl(
+      `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${randomImg}`
+    );
+  }, []);
+
   const { title, text, button, cvLabel } = messages[idx];
 
   return (
@@ -42,7 +60,10 @@ export default function Home() {
         <title>victorreipur.dk | Under Construction</title>
       </Head>
 
-      <main className="flex flex-col items-center justify-center h-screen w-screen bg-gradient-to-br from-gray-50 to-gray-200 p-4">
+      <main
+        className="flex flex-col items-center justify-center h-screen w-screen bg-cover bg-center p-4"
+        style={{ backgroundImage: `url('${bgUrl}')` }}
+      >
         {/* CV BUTTON */}
         <a
           href={CV_URL}
@@ -57,7 +78,7 @@ export default function Home() {
         {/* UNDER CONSTRUCTION BOX */}
         <div
           className={`
-            max-w-xl space-y-6 rounded-xl bg-white p-8 shadow-lg
+            max-w-xl space-y-6 rounded-xl bg-white bg-opacity-90 p-8 shadow-lg
             transition-all duration-300
             ${animating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
           `}
