@@ -1,25 +1,10 @@
+// pages/index.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { DocumentChartBarIcon } from '@heroicons/react/24/solid';
 
 const CV_URL =
   'https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/Victor_Reipur_CV.pdf';
-
-const messages = [
-  {
-    title: 'Siden Er Under Opbygning',
-    text: 'Velkommen til victorreipur.dk. Kontakt mig på victor@reipur.dk.',
-    button: 'Show in English',
-    cvLabel: 'Mit CV (PDF)',
-  },
-  {
-    title: 'Site Under Construction',
-    text: 'Welcome to victorreipur.dk. For inquiries, email me at victor@reipur.dk.',
-    button: 'Vis på dansk',
-    cvLabel: 'My CV (PDF)',
-  },
-];
 
 const imageFilenames = [
   'DJI_27_optimized.webp',
@@ -32,69 +17,58 @@ const imageFilenames = [
 ];
 
 export default function Home() {
-  const [idx, setIdx] = useState(0);
-  const [animating, setAnimating] = useState(false);
   const [bgUrl, setBgUrl] = useState('');
 
-  const handleSwitch = () => {
-    setAnimating(true);
-    setTimeout(() => {
-      setIdx((i) => (i + 1) % messages.length);
-      setAnimating(false);
-    }, 300);
-  };
-
   useEffect(() => {
-    const randomImg =
-      imageFilenames[Math.floor(Math.random() * imageFilenames.length)];
+    let idx = Number(sessionStorage.getItem('bgImageIndex'));
+    if (isNaN(idx) || idx < 0 || idx >= imageFilenames.length) idx = 0;
+    else idx = (idx + 1) % imageFilenames.length;
+    sessionStorage.setItem('bgImageIndex', idx.toString());
     setBgUrl(
-      `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${randomImg}`
+      `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${imageFilenames[idx]}`
     );
   }, []);
-
-  const { title, text, button, cvLabel } = messages[idx];
 
   return (
     <>
       <Head>
-        <title>victorreipur.dk | Under Construction</title>
+        <title>victorreipur.dk</title>
       </Head>
 
       <main
-        className="flex flex-col items-center justify-center h-screen w-screen bg-cover bg-center p-4"
+        className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
       >
-        {/* CV BUTTON */}
-        <a
-          href={CV_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-8 flex flex-col items-center text-primary hover:text-secondary transition"
-        >
-          <DocumentChartBarIcon className="h-24 w-24" aria-hidden="true" />
-          <span className="mt-2 font-medium">{cvLabel}</span>
-        </a>
+        {/* Embedded CV */}
+        <div className="w-full max-w-4xl h-[80vh] bg-white rounded-xl shadow-lg overflow-hidden">
+          <iframe
+            src={CV_URL}
+            className="w-full h-full"
+            title="Victor Reipur CV"
+          />
+        </div>
 
-        {/* UNDER CONSTRUCTION BOX */}
-        <div
-          className={`
-            max-w-xl space-y-6 rounded-xl bg-white bg-opacity-90 p-8 shadow-lg
-            transition-all duration-300
-            ${animating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}
-          `}
-        >
-          <h1 className="text-xl font-medium uppercase text-gray-500 tracking-widest">
-            {title}
-          </h1>
-          <p className="text-2xl font-semibold text-gray-800 leading-relaxed">
-            {text}
-          </p>
-          <button
-            onClick={handleSwitch}
-            className="mt-4 inline-block rounded-full border border-primary px-5 py-2 text-primary font-medium hover:bg-primary hover:text-white transition"
-          >
-            {button}
-          </button>
+        {/* Iframe Windows—all 400px tall */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
+          <iframe
+            src="https://mixedenergy.dk"
+            className="w-full h-[400px] rounded-lg shadow-md border"
+            title="Mixed Energy"
+          />
+
+          <iframe
+            src="https://judydu.dk"
+            className="w-full h-[400px] rounded-lg shadow-md border"
+            title="Judy Du"
+          />
+
+          <iframe
+            src={`/api/proxy?url=${encodeURIComponent(
+              'https://arctic.sustain.dtu.dk/find/publications/frontpage/'
+            )}`}
+            className="w-full h-[400px] rounded-lg shadow-md border"
+            title="DTU Arctic Publications"
+          />
         </div>
       </main>
     </>
