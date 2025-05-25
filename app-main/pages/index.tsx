@@ -165,7 +165,7 @@ export default function Home() {
   const handleLoadReady = () => {
     setTimeout(() => {
       setLoadedCount((c) => Math.min(c + 1, iframeConfigs.length - 1));
-    }, 6000);
+    }, 100);
   };
 
   return (
