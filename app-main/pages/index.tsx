@@ -3,20 +3,52 @@
 
 import { useEffect, useState, useRef, FC } from 'react';
 import Head from 'next/head';
-import { ArrowTopRightOnSquareIcon, DocumentChartBarIcon } from '@heroicons/react/24/outline';
+import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
 
 const CV_URL = 'https://victorreipur.dk/cv';
-const imageFilenames = [
-  'DJI_27_optimized.webp',
-  'DJI_31_optimized.webp',
-  'DJI_39_optimized.webp',
-  'DJI_43_optimized.webp',
-  'DJI_47_optimized.webp',
-  'DJI_51_optimized.webp',
-  'DJI_59_optimized.webp',
+const imageFilenames = ['DJI_47_optimized.webp'];
+
+const iframeConfigs: Array<{
+  src: string;
+  link?: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    src: 'https://mixedenergy.dk',
+    title: 'Mixed Energy',
+    description: 'E-Handelsbutik',
+  },
+  {
+    src: 'https://judydu.dk',
+    title: 'Judy Du',
+    description: `Judy Du's portfolio`,
+  },
+  {
+    src: `/api/proxy?url=${encodeURIComponent(
+      'https://arctic.sustain.dtu.dk/find/publications/frontpage/'
+    )}`,
+    title: 'Arctic Publications',
+    description: `DTU's Arktiske Publikationer`,
+  },
+  {
+    src: 'https://vault.vezit.net/#/login',
+    link: 'https://vault.reipur.dk/#/login',
+    title: 'Vaultwarden',
+    description: 'Min password manager',
+  },
+  {
+    src: 'https://wazuh.vezit.net',
+    title: 'Wazuh',
+    description: 'Mit SIEM system',
+  },
+  {
+    src: 'https://penpot.reipur.dk',
+    title: 'Penpot',
+    description: 'Mit design og prototype værktøj',
+  },
 ];
 
-// global loader styles
 const LoaderStyles = () => (
   <style jsx global>{`
     .loader {
@@ -41,15 +73,17 @@ const LoaderStyles = () => (
   `}</style>
 );
 
-// iframe with max 4s loader
-const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
+const ScaledIframe: FC<{
+  src: string;
+  link?: string;
+  onLoadReady: () => void;
+}> = ({ src, link, onLoadReady }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [isNarrow, setIsNarrow] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // recalc scale & width check
     const calcScale = () => {
       const w = wrapperRef.current?.offsetWidth ?? 1920;
       setScale(w / 1920);
@@ -61,13 +95,9 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
     window.addEventListener('resize', calcScale);
     window.addEventListener('resize', checkWidth);
 
-    // max loader timeout
-    const timer = setTimeout(() => setLoading(false), 4000);
-
     return () => {
       window.removeEventListener('resize', calcScale);
       window.removeEventListener('resize', checkWidth);
-      clearTimeout(timer);
     };
   }, []);
 
@@ -82,16 +112,18 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
           <div className="loader" />
         </div>
       )}
+
       <a
-        href={src}
+        href={link ?? src}
         target={isNarrow ? '_self' : '_blank'}
         rel="noopener noreferrer"
         className="absolute inset-0 z-10"
       />
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-lg border transition-transform duration-200 hover:scale-105 hover:shadow-xl">
+
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-lg border">
         <iframe
           src={src}
-          title={title}
+          title={src}
           className="pointer-events-none"
           style={{
             width: '1920px',
@@ -100,7 +132,10 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
             transformOrigin: '0 0',
             border: 'none',
           }}
-          onLoad={() => setLoading(false)}
+          onLoad={() => {
+            setLoading(false);
+            onLoadReady();
+          }}
         />
       </div>
     </div>
@@ -110,24 +145,32 @@ const ScaledIframe: FC<{ src: string; title: string }> = ({ src, title }) => {
 export default function Home() {
   const [bgUrl, setBgUrl] = useState('');
   const [isNarrow, setIsNarrow] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
 
+  // background & mobile check
   useEffect(() => {
-    // cycle background
     let idx = Number(sessionStorage.getItem('bgImageIndex'));
     if (isNaN(idx) || idx < 0 || idx >= imageFilenames.length) idx = 0;
-    else idx = (idx + 1) % imageFilenames.length;
-    sessionStorage.setItem('bgImageIndex', idx.toString());
-
+    sessionStorage.setItem(
+      'bgImageIndex',
+      ((idx + 1) % imageFilenames.length).toString()
+    );
     setBgUrl(
       `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${imageFilenames[idx]}`
     );
 
-    // mobile check
     const checkWidth = () => setIsNarrow(window.innerWidth < 800);
     checkWidth();
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
+
+  // after each iframe loads, wait 6s then allow next
+  const handleLoadReady = () => {
+    setTimeout(() => {
+      setLoadedCount((c) => Math.min(c + 1, iframeConfigs.length - 1));
+    }, 100);
+  };
 
   return (
     <>
@@ -141,7 +184,6 @@ export default function Home() {
         className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
       >
-        {/* CV icon */}
         <a
           href={CV_URL}
           target={isNarrow ? '_self' : '_blank'}
@@ -152,19 +194,69 @@ export default function Home() {
           Mit CV
         </a>
 
-        {/* all iframes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-6xl">
-          <ScaledIframe src="https://mixedenergy.dk" title="Mixed Energy" />
-          <ScaledIframe src="https://judydu.dk" title="Judy Du" />
-          <ScaledIframe
-            src={`/api/proxy?url=${encodeURIComponent(
-              'https://arctic.sustain.dtu.dk/find/publications/frontpage/'
-            )}`}
-            title="DTU Arctic Publications"
-          />
-          <ScaledIframe src="https://vault.vezit.net/#/login" title="Vault" />
-          <ScaledIframe src="https://wazuh.vezit.net" title="Wazuh" />
-          <ScaledIframe src="https://penpot.reipur.dk" title="Penpot" />
+        <div className="w-full max-w-6xl p-8 bg-black bg-opacity-50 rounded-lg space-y-8">
+          {/* First row */}
+          <h2 className="text-3xl font-bold">Apps jeg har udviklet</h2>
+          <div className="grid grid-cols-3 gap-6">
+            {iframeConfigs.slice(0, 3).map((cfg, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center bg-gray-800 p-4 rounded-lg"
+              >
+                <h3 className="text-xl font-semibold mb-2">{cfg.title}</h3>
+                <p className="mb-4 text-gray-300">{cfg.description}</p>
+                {i <= loadedCount ? (
+                  <ScaledIframe
+                    src={cfg.src}
+                    link={cfg.link}
+                    onLoadReady={handleLoadReady}
+                  />
+                ) : (
+                  <div
+                    className="relative w-full"
+                    style={{ paddingTop: '56.25%' }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+                      <div className="loader" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Second row */}
+          <h2 className="text-3xl font-bold">Apps jeg drifter og bruger</h2>
+          <div className="grid grid-cols-3 gap-6">
+            {iframeConfigs.slice(3, 6).map((cfg, i) => {
+              const idx = i + 3;
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center bg-gray-800 p-4 rounded-lg"
+                >
+                  <h3 className="text-xl font-semibold mb-2">{cfg.title}</h3>
+                  <p className="mb-4 text-gray-300">{cfg.description}</p>
+                  {idx <= loadedCount ? (
+                    <ScaledIframe
+                      src={cfg.src}
+                      link={cfg.link}
+                      onLoadReady={handleLoadReady}
+                    />
+                  ) : (
+                    <div
+                      className="relative w-full"
+                      style={{ paddingTop: '56.25%' }}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+                        <div className="loader" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </main>
     </>
