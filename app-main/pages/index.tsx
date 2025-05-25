@@ -45,7 +45,7 @@ const iframeConfigs: Array<{
   {
     src: 'https://penpot.reipur.dk',
     title: 'Penpot',
-    description: 'Mit design og prototype værktøj',
+    description: 'Mit design og prototype-værktøj',
   },
 ];
 
@@ -112,14 +112,12 @@ const ScaledIframe: FC<{
           <div className="loader" />
         </div>
       )}
-
       <a
         href={link ?? src}
         target={isNarrow ? '_self' : '_blank'}
         rel="noopener noreferrer"
         className="absolute inset-0 z-10"
       />
-
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-lg border">
         <iframe
           src={src}
@@ -147,7 +145,6 @@ export default function Home() {
   const [isNarrow, setIsNarrow] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
 
-  // background & mobile check
   useEffect(() => {
     let idx = Number(sessionStorage.getItem('bgImageIndex'));
     if (isNaN(idx) || idx < 0 || idx >= imageFilenames.length) idx = 0;
@@ -165,7 +162,6 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  // after each iframe loads, wait 6s then allow next
   const handleLoadReady = () => {
     setTimeout(() => {
       setLoadedCount((c) => Math.min(c + 1, iframeConfigs.length - 1));
@@ -175,11 +171,9 @@ export default function Home() {
   return (
     <>
       <LoaderStyles />
-
       <Head>
         <title>victorreipur.dk</title>
       </Head>
-
       <main
         className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
@@ -187,7 +181,7 @@ export default function Home() {
         <div className="w-full max-w-6xl p-8 bg-black bg-opacity-50 rounded-lg space-y-8">
           {/* First row */}
           <h2 className="text-3xl font-bold">Apps jeg har udviklet</h2>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {iframeConfigs.slice(0, 3).map((cfg, i) => (
               <div
                 key={i}
@@ -202,10 +196,7 @@ export default function Home() {
                     onLoadReady={handleLoadReady}
                   />
                 ) : (
-                  <div
-                    className="relative w-full"
-                    style={{ paddingTop: '56.25%' }}
-                  >
+                  <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
                       <div className="loader" />
                     </div>
@@ -214,11 +205,10 @@ export default function Home() {
               </div>
             ))}
           </div>
-
           {/* Second row */}
           <h2 className="text-3xl font-bold">Apps jeg drifter og bruger</h2>
-          <div className="grid grid-cols-3 gap-6">
-            {iframeConfigs.slice(3, 6).map((cfg, i) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {iframeConfigs.slice(3).map((cfg, i) => {
               const idx = i + 3;
               return (
                 <div
@@ -234,10 +224,7 @@ export default function Home() {
                       onLoadReady={handleLoadReady}
                     />
                   ) : (
-                    <div
-                      className="relative w-full"
-                      style={{ paddingTop: '56.25%' }}
-                    >
+                    <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
                         <div className="loader" />
                       </div>
@@ -247,13 +234,12 @@ export default function Home() {
               );
             })}
           </div>
-
-          {/* CV button moved inside big canvas, same bg as cards */}
+          {/* CV button */}
           <a
             href={CV_URL}
             target={isNarrow ? '_self' : '_blank'}
             rel="noopener noreferrer"
-            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold text-xl hover:bg-gray-700 transition"
+            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold hover:bg-gray-700 transition"
           >
             <DocumentChartBarIcon className="h-6 w-6 mr-2" />
             Mit CV
