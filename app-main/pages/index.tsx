@@ -169,7 +169,7 @@ export default function Home() {
   const handleLoadReady = () => {
     setTimeout(() => {
       setLoadedCount((c) => Math.min(c + 1, iframeConfigs.length - 1));
-    }, 100);
+    }, 6000);
   };
 
   return (
@@ -184,16 +184,6 @@ export default function Home() {
         className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
       >
-        <a
-          href={CV_URL}
-          target={isNarrow ? '_self' : '_blank'}
-          rel="noopener noreferrer"
-          className="inline-flex items-center mb-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-full text-white font-medium transition z-10"
-        >
-          <DocumentChartBarIcon className="h-6 w-6 mr-2" />
-          Mit CV
-        </a>
-
         <div className="w-full max-w-6xl p-8 bg-black bg-opacity-50 rounded-lg space-y-8">
           {/* First row */}
           <h2 className="text-3xl font-bold">Apps jeg har udviklet</h2>
@@ -257,6 +247,17 @@ export default function Home() {
               );
             })}
           </div>
+
+          {/* CV button moved inside big canvas, same bg as cards */}
+          <a
+            href={CV_URL}
+            target={isNarrow ? '_self' : '_blank'}
+            rel="noopener noreferrer"
+            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold text-xl hover:bg-gray-700 transition"
+          >
+            <DocumentChartBarIcon className="h-6 w-6 mr-2" />
+            Mit CV
+          </a>
         </div>
       </main>
     </>
