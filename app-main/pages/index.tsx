@@ -23,6 +23,7 @@ const sites: Array<{
     description: 'E-Handelsbutik',
     main: true, // <— only iframe we want to show
   },
+
   {
     src: `/api/proxy?url=${encodeURIComponent(
       'https://arctic.sustain.dtu.dk/find/publications/frontpage/'
@@ -165,7 +166,7 @@ export default function Home() {
             href={CV_URL}
             target={isNarrow ? '_self' : '_blank'}
             rel="noopener noreferrer"
-            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold hover:bg-gray-700 transition-transform hover:-translate-y-1"
+            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold hover:bg-gray-700 transition-transform"
           >
             <DocumentChartBarIcon className="h-6 w-6 mr-2" />
             Mit CV
@@ -187,7 +188,7 @@ export default function Home() {
                   href={site.link ?? site.src}
                   target={isNarrow ? '_self' : '_blank'}
                   rel="noopener noreferrer"
-                  className="px-6 py-3 rounded-full bg-gray-800 font-semibold transition-transform hover:-translate-y-1 hover:bg-gray-700"
+                  className="px-6 py-3 rounded-full bg-gray-800 font-semibold transition-transform hover:bg-gray-700"
                 >
                   {site.title}
                 </a>
