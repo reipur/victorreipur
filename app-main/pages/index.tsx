@@ -24,11 +24,6 @@ const sites: Array<{
     main: true, // <— only iframe we want to show
   },
   {
-    src: 'https://judydu.dk',
-    title: 'Judy Du',
-    description: `Judy Du's portfolio`,
-  },
-  {
     src: `/api/proxy?url=${encodeURIComponent(
       'https://arctic.sustain.dtu.dk/find/publications/frontpage/'
     )}`,
