@@ -5,19 +5,23 @@ import { useEffect, useState, useRef, FC } from 'react';
 import Head from 'next/head';
 import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
 
+// ---- Static data ----------------------------------------------------------
 const CV_URL = 'https://victorreipur.dk/cv';
 const imageFilenames = ['DJI_47_optimized.webp'];
 
-const iframeConfigs: Array<{
+// Website configuration; mark the main site and fall-backs for everything else
+const sites: Array<{
   src: string;
   link?: string;
   title: string;
   description: string;
+  main?: boolean;
 }> = [
   {
     src: 'https://mixedenergy.dk',
     title: 'Mixed Energy',
     description: 'E-Handelsbutik',
+    main: true, // <— only iframe we want to show
   },
   {
     src: 'https://judydu.dk',
@@ -49,6 +53,8 @@ const iframeConfigs: Array<{
   },
 ];
 
+// ---- Visual helpers -------------------------------------------------------
+
 const LoaderStyles = () => (
   <style jsx global>{`
     .loader {
@@ -73,48 +79,34 @@ const LoaderStyles = () => (
   `}</style>
 );
 
-const ScaledIframe: FC<{
-  src: string;
-  link?: string;
-  onLoadReady: () => void;
-}> = ({ src, link, onLoadReady }) => {
+// Single responsive iframe that keeps 16:9 and scales with viewport
+const ScaledIframe: FC<{ src: string; link?: string }> = ({ src, link }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [isNarrow, setIsNarrow] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // calc scale on resize -----------------------------------------------------
   useEffect(() => {
     const calcScale = () => {
       const w = wrapperRef.current?.offsetWidth ?? 1920;
       setScale(w / 1920);
     };
-    const checkWidth = () => setIsNarrow(window.innerWidth < 800);
-
     calcScale();
-    checkWidth();
     window.addEventListener('resize', calcScale);
-    window.addEventListener('resize', checkWidth);
-
-    return () => {
-      window.removeEventListener('resize', calcScale);
-      window.removeEventListener('resize', checkWidth);
-    };
+    return () => window.removeEventListener('resize', calcScale);
   }, []);
 
   return (
-    <div
-      ref={wrapperRef}
-      className="relative w-full"
-      style={{ paddingTop: '56.25%' }}
-    >
+    <div ref={wrapperRef} className="relative w-full" style={{ paddingTop: '56.25%' }}>
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
           <div className="loader" />
         </div>
       )}
+      {/* transparent click-through overlay so users can open site */}
       <a
         href={link ?? src}
-        target={isNarrow ? '_self' : '_blank'}
+        target="_blank"
         rel="noopener noreferrer"
         className="absolute inset-0 z-10"
       />
@@ -130,28 +122,23 @@ const ScaledIframe: FC<{
             transformOrigin: '0 0',
             border: 'none',
           }}
-          onLoad={() => {
-            setLoading(false);
-            onLoadReady();
-          }}
+          onLoad={() => setLoading(false)}
         />
       </div>
     </div>
   );
 };
 
+// ---- Page component -------------------------------------------------------
 export default function Home() {
   const [bgUrl, setBgUrl] = useState('');
   const [isNarrow, setIsNarrow] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
 
+  // rotate background and watch width ---------------------------------------
   useEffect(() => {
     let idx = Number(sessionStorage.getItem('bgImageIndex'));
     if (isNaN(idx) || idx < 0 || idx >= imageFilenames.length) idx = 0;
-    sessionStorage.setItem(
-      'bgImageIndex',
-      ((idx + 1) % imageFilenames.length).toString()
-    );
+    sessionStorage.setItem('bgImageIndex', ((idx + 1) % imageFilenames.length).toString());
     setBgUrl(
       `https://supabase.victorreipur.dk/storage/v1/object/public/public-bucket/images/havearbejde/${imageFilenames[idx]}`
     );
@@ -162,11 +149,8 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  const handleLoadReady = () => {
-    setTimeout(() => {
-      setLoadedCount((c) => Math.min(c + 1, iframeConfigs.length - 1));
-    }, 100);
-  };
+  const mainSite = sites.find((s) => s.main)!; // Mixed Energy
+  const otherSites = sites.filter((s) => !s.main);
 
   return (
     <>
@@ -174,76 +158,49 @@ export default function Home() {
       <Head>
         <title>victorreipur.dk</title>
       </Head>
+
       <main
         className="flex flex-col items-center justify-center min-h-screen w-screen bg-cover bg-center p-4 text-white text-center gap-8"
         style={{ backgroundImage: `url('${bgUrl}')` }}
       >
-        <div className="w-full max-w-6xl p-8 bg-black bg-opacity-50 rounded-lg space-y-8">
-          {/* First row */}
-          <h2 className="text-3xl font-bold">Apps jeg har udviklet</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {iframeConfigs.slice(0, 3).map((cfg, i) => (
-              <div
-                key={i}
-                className="flex flex-col items-center bg-gray-800 p-4 rounded-lg"
-              >
-                <h3 className="text-xl font-semibold mb-2">{cfg.title}</h3>
-                <p className="mb-4 text-gray-300">{cfg.description}</p>
-                {i <= loadedCount ? (
-                  <ScaledIframe
-                    src={cfg.src}
-                    link={cfg.link}
-                    onLoadReady={handleLoadReady}
-                  />
-                ) : (
-                  <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-                      <div className="loader" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          {/* Second row */}
-          <h2 className="text-3xl font-bold">Apps jeg drifter og bruger</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {iframeConfigs.slice(3).map((cfg, i) => {
-              const idx = i + 3;
-              return (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center bg-gray-800 p-4 rounded-lg"
-                >
-                  <h3 className="text-xl font-semibold mb-2">{cfg.title}</h3>
-                  <p className="mb-4 text-gray-300">{cfg.description}</p>
-                  {idx <= loadedCount ? (
-                    <ScaledIframe
-                      src={cfg.src}
-                      link={cfg.link}
-                      onLoadReady={handleLoadReady}
-                    />
-                  ) : (
-                    <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-                        <div className="loader" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* CV button */}
+        <div className="w-full max-w-6xl p-8 bg-black bg-opacity-50 rounded-lg space-y-12">
+
+                    {/* CV ------------------------------------------------------------ */}
           <a
             href={CV_URL}
             target={isNarrow ? '_self' : '_blank'}
             rel="noopener noreferrer"
-            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold hover:bg-gray-700 transition"
+            className="inline-flex items-center mt-4 px-6 py-3 bg-gray-800 rounded-full text-white font-bold hover:bg-gray-700 transition-transform hover:-translate-y-1"
           >
             <DocumentChartBarIcon className="h-6 w-6 mr-2" />
             Mit CV
           </a>
+          {/* Mixed Energy --------------------------------------------------- */}
+          <div>
+            <h2 className="text-3xl font-bold mb-2">{mainSite.title}</h2>
+            <p className="text-gray-300 mb-6">{mainSite.description}</p>
+            <ScaledIframe src={mainSite.src} link={mainSite.link} />
+          </div>
+
+          {/* Other projects list ------------------------------------------- */}
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Andre projekter</h2>
+            <div className="flex flex-wrap justify-center gap-4">
+              {otherSites.map((site) => (
+                <a
+                  key={site.title}
+                  href={site.link ?? site.src}
+                  target={isNarrow ? '_self' : '_blank'}
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 rounded-full bg-gray-800 font-semibold transition-transform hover:-translate-y-1 hover:bg-gray-700"
+                >
+                  {site.title}
+                </a>
+              ))}
+            </div>
+          </div>
+
+
         </div>
       </main>
     </>
